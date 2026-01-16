@@ -2,25 +2,39 @@ import fs from "fs";
 import path from "path";
 import sharp from "sharp";
 
-const IN_DIR = "originals";
 const OUT_DIR = "images";
-
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
-const files = fs.readdirSync(IN_DIR);
+const allowedExt = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 
-for (const file of files) {
-  const inputPath = path.join(IN_DIR, file);
+const args = process.argv.slice(2);
 
-  // skip folders
-  if (fs.statSync(inputPath).isDirectory()) continue;
+// If no args, do nothing (safe)
+if (args.length === 0) {
+  console.log("No changed files provided. Nothing to process.");
+  process.exit(0);
+}
 
-  const outputName = file.replace(/\.(png|jpg|jpeg)$/i, ".webp");
-  const outputPath = path.join(OUT_DIR, outputName);
+for (const filePath of args) {
+  if (!filePath.startsWith("originals/")) continue;
 
-  console.log("Processing:", inputPath);
+  const ext = path.extname(filePath).toLowerCase();
+  if (!allowedExt.has(ext)) {
+    console.log("Skipping non-image:", filePath);
+    continue;
+  }
 
-  await sharp(inputPath)
+  if (!fs.existsSync(filePath)) {
+    console.log("File not found (maybe deleted):", filePath);
+    continue;
+  }
+
+  const baseName = path.basename(filePath, ext);
+  const outputPath = path.join(OUT_DIR, `${baseName}.webp`);
+
+  console.log("Processing:", filePath);
+
+  await sharp(filePath)
     .resize(1600, 1600, { fit: "inside", withoutEnlargement: true })
     .webp({ quality: 80 })
     .toFile(outputPath);
