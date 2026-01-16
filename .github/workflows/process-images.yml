@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -23,9 +25,17 @@ jobs:
           npm init -y
           npm install sharp
 
-      - name: Convert images to webp
+      - name: Get changed files
+        id: changed
         run: |
-          node process-images.js
+          echo "FILES<<EOF" >> $GITHUB_OUTPUT
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} | tr '\n' ' ' >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Convert only changed images
+        run: |
+          node process-images.js ${{ steps.changed.outputs.FILES }}
 
       - name: Commit processed images
         run: |
