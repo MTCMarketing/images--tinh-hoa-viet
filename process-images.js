@@ -2,8 +2,8 @@ import fs from "fs";
 import path from "path";
 import sharp from "sharp";
 
-const IN_DIR = "static-content/uploads";
-const OUT_DIR = "static-content/processed";
+const IN_DIR = "originals";
+const OUT_DIR = "images";
 
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
